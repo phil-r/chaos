@@ -60,7 +60,7 @@ Emoji which count as votes are:
 
 ## Death Counter
 
-Chaosbot has died 6 times.  This counter is incremented whenever the trunk breaks
+Chaosbot has died 100 times.  This counter is incremented whenever the trunk breaks
 and the server must be restarted manually.  Last broken by #97
 
 ## Rulers
