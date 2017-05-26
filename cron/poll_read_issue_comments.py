@@ -44,17 +44,17 @@ def get_command_votes(api, urn, comment_id):
         votes[voter] = vote
     return votes
 
-def handle_vote_command(api, command, issue_id, votes):
+def handle_vote_command(api, command, issue_id, comment_id, votes):
     orig_command = command[:]
     # Check for correct command syntax, ie, subcommands
     log_warning = False
     if(len(command)):
         sub_command = command.pop(0)
         if(sub_command == "close"):
-            if(can_run_vote_command(votes)):
+            if(can_run_vote_command(votes, comment_id)):
                 gh.issues.close_issue(api, settings.URN, issue_id)
         elif(sub_command == "reopen"):
-            if(can_run_vote_command(votes)):
+            if(can_run_vote_command(votes, comment_id)):
                 gh.issues.open_issue(api, settings.URN, issue_id)
         else:
             # Other commands have an = in them
@@ -93,7 +93,7 @@ def handle_comment(api, issue_comment):
         votes = get_command_votes(api, settings.URN, global_comment_id)
         # We doin stuff boyz
         if command == "/vote":
-            handle_vote_command(api, parsed_comment, issue_id, votes)
+            handle_vote_command(api, parsed_comment, issue_id, global_comment_id, votes)
 
 def poll_read_issue_comments():
     __log.info("looking for issue comments")
