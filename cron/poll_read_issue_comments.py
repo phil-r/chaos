@@ -21,20 +21,30 @@ Command Syntax
 
 COMMAND_LIST = ["/vote"]
 
-def can_run_vote_command(reactions):
-    return False
+def can_run_vote_command(votes):
+    # At least one negative vote will cause vote to not pass
+    for user, vote in votes.items():
+        if vote < 0:
+            return False
+    return True
 
-def handle_vote_command(api, command, issue_id, reactions):
+def get_command_votes(api, urn, comment_id):
+    votes = {}
+    for voter, vote in gh.voting.get_comment_reaction_votes(api, urn, comment_id):
+        votes[voter] = vote
+    return votes
+
+def handle_vote_command(api, command, issue_id, votes):
     orig_command = command[:]
     # Check for correct command syntax, ie, subcommands
     log_warning = False
     if(len(command)):
         sub_command = command.pop(0)
         if(sub_command == "close"):
-            if(can_run_vote_command(reactions)):
+            if(can_run_vote_command(votes)):
                 gh.issues.close_issue(api, settings.URN, issue_id)
         elif(sub_command == "reopen"):
-            if(can_run_vote_command(reactions)):
+            if(can_run_vote_command(votes)):
                 gh.issues.open_issue(api, settings.URN, issue_id)
         else:
             # Other commands have an = in them
@@ -64,16 +74,18 @@ def handle_comment(api, issue_comment):
     issue_id = issue_comment["issue_id"]
     global_comment_id = issue_comment["global_comment_id"]
     comment_text = issue_comment["comment_text"]
-    reactions = issue_comment["reactions"]
     __log.debug("Handling issue {issue}: comment {comment_text}".format(issue=issue_id, comment=comment_text))
     
     parsed_comment = map(lambda x: x.lower().strip(), comment_text.split(' '))
     
     command = parsed_comment.pop(0)
     if command in COMMAND_LIST:
+        votes = get_command_votes(api, settings.URN, global_comment_id)
+        
+        reactions = get_reactions_for_comment(api, settings.URN, global_comment_id):
         # We doin stuff boyz
         if command == "/vote":
-            handle_vote_command(api, parsed_comment, issue_id, reactions)
+            handle_vote_command(api, parsed_comment, issue_id, votes)
 
 def poll_read_issue_comments():
     __log.info("looking for issue comments")
