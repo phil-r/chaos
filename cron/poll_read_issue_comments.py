@@ -7,6 +7,13 @@ import settings
 import github_api as gh
 
 THIS_DIR = dirname(abspath(__file__))
+# Hopefully this isn't overwritten on pulls
+SAVED_COMMANDS_FILE = join(THIS_DIR,'..',"data/issue_commands_ran.json")
+if not os.path.exists(SAVED_COMMANDS_FILE):
+    with open(SAVED_COMMANDS_FILE, 'w') as f:
+        dummy_data = {}
+        dummy_data["comment_ids_ran"] = []
+        json.dump(dummy_data, f)
 
 __log = logging.getLogger("chaosbot")
 
@@ -23,19 +30,33 @@ Command Syntax
 COMMAND_LIST = ["/vote"]
 
 def can_run_vote_command(votes, comment_id):
+    json_data = {}
+    with open(SAVED_COMMANDS_FILE, 'r') as f:
+        json_data = json.load(f)
+        
+    # Already ran this command
+    if comment_id in json_data["comment_ids_ran"]:
+        return False
+    
     # Voting window has passed
     now = arrow.utcnow()
     voting_window = gh.voting.get_voting_window(now)
     
     voting_window_over = gh.issues.is_issue_comment_in_voting_window(api, settings.URN, comment_id,
                 voting_window)
-    if not voting_window_over:
+    if not voting_window_over: # Still voting
         return False
 
     # At least one negative vote will cause vote to not pass
     for user, vote in votes.items():
         if vote < 0:
             return False
+    
+    # Ugly putting it here, but it works
+    with open(SAVED_COMMANDS_FILE, 'w') as f:
+        json_data["comment_ids_ran"].append(comment_id)
+        json.dump(json_data, f)
+
     return True
 
 def get_command_votes(api, urn, comment_id):
