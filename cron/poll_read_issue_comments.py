@@ -21,16 +21,21 @@ Command Syntax
 
 COMMAND_LIST = ["/vote"]
 
-def handle_vote_command(command):
+def can_run_vote_command(reactions):
+    return False
+
+def handle_vote_command(api, command, issue_id, reactions):
     orig_command = command[:]
     # Check for correct command syntax, ie, subcommands
     log_warning = False
     if(len(command)):
         sub_command = command.pop(0)
         if(sub_command == "close"):
-            pass # do stuff
+            if(can_run_vote_command(reactions)):
+                gh.issues.close_issue(api, settings.URN, issue_id)
         elif(sub_command == "reopen"):
-            pass # do stuff
+            if(can_run_vote_command(reactions)):
+                gh.issues.open_issue(api, settings.URN, issue_id)
         else:
             # Other commands have an = in them
             sub_command = sub_command.split("=")
@@ -55,10 +60,11 @@ def handle_vote_command(command):
     if log_warning:
         __log.warning("Unknown issue command syntax: /vote {command}".format(command=orig_command))
 
-def handle_comment(issue_comment):
+def handle_comment(api, issue_comment):
     issue_id = issue_comment["issue_id"]
     global_comment_id = issue_comment["global_comment_id"]
     comment_text = issue_comment["comment_text"]
+    reactions = issue_comment["reactions"]
     __log.debug("Handling issue {issue}: comment {comment_text}".format(issue=issue_id, comment=comment_text))
     
     parsed_comment = map(lambda x: x.lower().strip(), comment_text.split(' '))
@@ -67,7 +73,7 @@ def handle_comment(issue_comment):
     if command in COMMAND_LIST:
         # We doin stuff boyz
         if command == "/vote":
-            handle_vote_command(parsed_comment)
+            handle_vote_command(api, parsed_comment, issue_id, reactions)
 
 def poll_read_issue_comments():
     __log.info("looking for issue comments")
@@ -77,7 +83,7 @@ def poll_read_issue_comments():
     issue_comments = gh.comments.get_all_issue_comments(api, settings.URN)
     
     for issue_comment in issue_comments:
-        handle_comment(issue_comment)
+        handle_comment(api, issue_comment)
         
     __log.info("Waiting %d seconds until next scheduled Issue comment polling",
                settings.ISSUE_COMMENT_POLLING_INTERVAL_SECONDS)
