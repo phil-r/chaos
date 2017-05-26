@@ -15,10 +15,11 @@ def get_all_issue_comments(api, urn):
     comments = api("get", path, params=params)
     for comment in comments:
         # Return issue_id, global_comment_id, comment_text, , 
-        issue_id = comment["html_url"].split("/")[-1].split("#")[0] # "https://github.com/octocat/Hello-World/issues/1347#issuecomment-1"
-        global_comment_id = comment["id"] # I believe this is the right one... Could also be issue specific comment id
-        comment_text = comment["body"]
-        yield (issue_id, global_comment_id, comment_text)
+        issue_comment = {}
+        issue_comment["issue_id"] = comment["html_url"].split("/")[-1].split("#")[0] # "https://github.com/octocat/Hello-World/issues/1347#issuecomment-1"
+        issue_comment["global_comment_id"] = comment["id"] # I believe this is the right one... Could also be issue specific comment id
+        issue_comment["comment_text"] = comment["body"]
+        yield issue_comment
 
 def get_reactions_for_comment(api, urn, comment_id):
     path = "/repos/{urn}/issues/comments/{comment}/reactions"\
