@@ -81,8 +81,6 @@ def handle_comment(api, issue_comment):
     command = parsed_comment.pop(0)
     if command in COMMAND_LIST:
         votes = get_command_votes(api, settings.URN, global_comment_id)
-        
-        reactions = get_reactions_for_comment(api, settings.URN, global_comment_id):
         # We doin stuff boyz
         if command == "/vote":
             handle_vote_command(api, parsed_comment, issue_id, votes)
