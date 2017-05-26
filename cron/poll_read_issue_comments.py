@@ -1,4 +1,5 @@
 import logging
+import arrow
 import os
 from os.path import abspath, dirname
 
@@ -21,7 +22,16 @@ Command Syntax
 
 COMMAND_LIST = ["/vote"]
 
-def can_run_vote_command(votes):
+def can_run_vote_command(votes, comment_id):
+    # Voting window has passed
+    now = arrow.utcnow()
+    voting_window = gh.voting.get_voting_window(now)
+    
+    voting_window_over = gh.issues.is_issue_comment_in_voting_window(api, settings.URN, comment_id,
+                voting_window)
+    if not voting_window_over:
+        return False
+
     # At least one negative vote will cause vote to not pass
     for user, vote in votes.items():
         if vote < 0:
