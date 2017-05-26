@@ -2,6 +2,23 @@ import arrow
 import settings
 from . import prs
 
+def get_all_issue_comments(api, urn):
+    # Do all issue comments at once for API's sake..
+    path = "/repos/{urn}/issues/comments".format(urn=urn)
+    # TODO - implement parameters
+    # sort - Either "created" or "updated". Defautl: "created
+    # direction - Either "asc" or "desc". Ignored without the sort parameter.
+    # since - Only comments updated at or after this time are returned. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+    #
+    # Add get-reaction support for issue comments
+    params = {"per_page": settings.DEFAULT_PAGINATION}
+    comments = api("get", path, params=params)
+    for comment in comments:
+        # Return issue_id, global_comment_id, comment_text, , 
+        issue_id = comment["html_url"].split("/")[-1].split("#")[0] # "https://github.com/octocat/Hello-World/issues/1347#issuecomment-1"
+        global_comment_id = comment["id"] # I believe this is the right one... Could also be issue specific comment id
+        comment_text = comment["body"]
+        yield (issue_id, global_comment_id, comment_text)
 
 def get_reactions_for_comment(api, urn, comment_id):
     path = "/repos/{urn}/issues/comments/{comment}/reactions"\
