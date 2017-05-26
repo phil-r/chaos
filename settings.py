@@ -33,7 +33,7 @@ TEST = False
 
 # the number of seconds chaosbot should sleep between polling for ready prs
 PULL_REQUEST_POLLING_INTERVAL_SECONDS = 30
-ISSUE_COMMENT_POLLING_INTERVAL_SECONDS = 60 * 10  # 10 minutes is fine
+ISSUE_COMMENT_POLLING_INTERVAL_SECONDS = 60 * 60 * 3  # 3 hour voting window on issue comment commands
 
 # The default number of hours for how large the voting window is
 DEFAULT_VOTE_WINDOW = 2.0
