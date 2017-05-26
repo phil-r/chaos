@@ -10,7 +10,9 @@ THIS_DIR = dirname(abspath(__file__))
 __log = logging.getLogger("chaosbot")
 
 def handle_comment(issue_comment):
-    issue_id, global_comment_id, comment_text = issue_comment
+    issue_id = issue_comment["issue_id"]
+    global_comment_id = issue_comment["global_comment_id"]
+    comment_text = issue_comment["comment_text"]
     __log.debug("Handling issue {issue}: comment {comment_text}".format(issue=issue_id, comment=comment_text)
     # Do stuff here
 
