@@ -9,11 +9,18 @@ import github_api as gh
 
 THIS_DIR = dirname(abspath(__file__))
 # Hopefully this isn't overwritten on pulls
-SAVED_COMMANDS_FILE = join(THIS_DIR,'..',"data/issue_commands_ran.json")
+SAVED_COMMANDS_FILE = join(THIS_DIR,'..',"server/issue_commands_ran.json")
 if not os.path.exists(SAVED_COMMANDS_FILE):
+    '''
+        "comment_ids_ran": [
+            {
+                "comment_id" : .., 
+                "chaos_response_id" : ..
+            } 
+        ]
+    '''
     with open(SAVED_COMMANDS_FILE, 'w') as f:
-        dummy_data = {}
-        dummy_data["comment_ids_ran"] = []
+        dummy_data = { "comment_ids_ran": []}
         json.dump(dummy_data, f)
 
 __log = logging.getLogger("chaosbot")
@@ -34,31 +41,42 @@ def can_run_vote_command(votes, comment_id):
     json_data = {}
     with open(SAVED_COMMANDS_FILE, 'r') as f:
         json_data = json.load(f)
-        
+
     # Already ran this command
-    if comment_id in json_data["comment_ids_ran"]:
-        return False
+    for ids_ran in json_data["comment_ids_ran"]:
+        if comment_id == ids_ran["comment_id"]:
+            __log.debug("Already ran commmand")
+            return False
     
     # Voting window has passed
-    now = arrow.utcnow()
-    voting_window = gh.voting.get_voting_window(now)
+    # now = arrow.utcnow()
+    # voting_window = gh.voting.get_voting_window(now)
     
-    voting_window_over = gh.issues.is_issue_comment_in_voting_window(api, settings.URN, comment_id,
-                voting_window)
-    if not voting_window_over: # Still voting
-        return False
+    # voting_window_over = gh.issues.is_issue_comment_in_voting_window(api, settings.URN, comment_id,
+    #             voting_window)
+    # if not voting_window_over: # Still voting
+    #     return False
 
     # At least one negative vote will cause vote to not pass
     for user, vote in votes.items():
         if vote < 0:
+            __log.debug("vote less than one")
             return False
     
-    # Ugly putting it here, but it works
-    with open(SAVED_COMMANDS_FILE, 'w') as f:
-        json_data["comment_ids_ran"].append(comment_id)
-        json.dump(json_data, f)
-
     return True
+
+def update_command_ran(command_id):
+    json_data = {}
+    with open(SAVED_COMMANDS_FILE, 'r') as f:
+        json_data = json.load(f)
+
+    with open(SAVED_COMMANDS_FILE, 'w') as f:
+        data = {
+            "comment_id": command_id,
+            "chaos_response_id": None
+        }
+        json_data["comment_ids_ran"].append(data)
+        json.dump(json_data, f)
 
 def get_command_votes(api, urn, comment_id):
     votes = {}
@@ -68,16 +86,16 @@ def get_command_votes(api, urn, comment_id):
 
 def handle_vote_command(api, command, issue_id, comment_id, votes):
     orig_command = command[:]
-    # Check for correct command syntax, ie, subcommands
+    # Check for correct command syntax, ie, subcommands    
     log_warning = False
     if len(command):
         sub_command = command.pop(0)
         if sub_command == "close":
-            if can_run_vote_command(votes, comment_id):
-                gh.issues.close_issue(api, settings.URN, issue_id)
+            gh.issues.close_issue(api, settings.URN, issue_id)
+            update_command_ran(comment_id)
         elif sub_command == "reopen":
-            if can_run_vote_command(votes, comment_id):
-                gh.issues.open_issue(api, settings.URN, issue_id)
+            gh.issues.open_issue(api, settings.URN, issue_id)
+            update_command_ran(comment_id)
         else:
             # Other commands have an = in them
             sub_command = sub_command.split("=")
@@ -106,16 +124,18 @@ def handle_comment(api, issue_comment):
     issue_id = issue_comment["issue_id"]
     global_comment_id = issue_comment["global_comment_id"]
     comment_text = issue_comment["comment_text"]
-    __log.debug("Handling issue {issue}: comment {comment_text}".format(issue=issue_id, comment=comment_text))
     
-    parsed_comment = map(lambda x: x.lower().strip(), comment_text.split(' '))
+    parsed_comment = list(map(lambda x: x.lower().strip(), comment_text.split(' ')))
     
     command = parsed_comment.pop(0)
-    if command in COMMAND_LIST:
+    if command in COMMAND_LIST: 
         votes = get_command_votes(api, settings.URN, global_comment_id)
         # We doin stuff boyz
-        if command == "/vote":
-            handle_vote_command(api, parsed_comment, issue_id, global_comment_id, votes)
+        if can_run_vote_command(votes, global_comment_id):
+            __log.debug("Handling issue {issue}: comment {comment}".format(issue=issue_id, comment=comment_text))
+            
+            if command == "/vote":
+                handle_vote_command(api, parsed_comment, issue_id, global_comment_id, votes)
 
 def poll_read_issue_comments():
     __log.info("looking for issue comments")
