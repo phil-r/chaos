@@ -99,7 +99,7 @@ def handle_vote_command(api, command, issue_id, comment_id, votes):
         else:
             # Other commands have an = in them
             sub_command = sub_command.split("=")
-            if len(sub_command > 1):
+            if len(sub_command) > 1:
                 args = sub_command[1:]
                 sub_command = sub_command[0]
                 if sub_command == "label":
