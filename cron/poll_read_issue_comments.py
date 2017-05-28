@@ -122,11 +122,11 @@ def handle_comment(api, issue_comment):
         votes = get_command_votes(api, settings.URN, global_comment_id)
         # We doin stuff boyz
         if can_run_vote_command(api, votes, global_comment_id):
-            __log.debug("Handling issue {issue}: comment {comment}".format(issue=issue_id, 
+            __log.debug("Handling issue {issue}: comment {comment}".format(issue=issue_id,
                                                                            comment=comment_text))
 
             if command == "/vote":
-                handle_vote_command(api, parsed_comment, issue_id, 
+                handle_vote_command(api, parsed_comment, issue_id,
                                     global_comment_id, votes)
 
 
