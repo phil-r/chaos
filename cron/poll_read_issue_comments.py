@@ -1,7 +1,8 @@
 import logging
 import arrow
+import json
 import os
-from os.path import abspath, dirname
+from os.path import join, abspath, dirname
 
 import settings
 import github_api as gh
@@ -69,27 +70,27 @@ def handle_vote_command(api, command, issue_id, comment_id, votes):
     orig_command = command[:]
     # Check for correct command syntax, ie, subcommands
     log_warning = False
-    if(len(command)):
+    if len(command):
         sub_command = command.pop(0)
-        if(sub_command == "close"):
-            if(can_run_vote_command(votes, comment_id)):
+        if sub_command == "close":
+            if can_run_vote_command(votes, comment_id):
                 gh.issues.close_issue(api, settings.URN, issue_id)
-        elif(sub_command == "reopen"):
-            if(can_run_vote_command(votes, comment_id)):
+        elif sub_command == "reopen":
+            if can_run_vote_command(votes, comment_id):
                 gh.issues.open_issue(api, settings.URN, issue_id)
         else:
             # Other commands have an = in them
             sub_command = sub_command.split("=")
-            if(len(sub_command > 1)):
+            if len(sub_command > 1):
                 args = sub_command[1:]
                 sub_command = sub_command[0]
-                if(sub_command == "label"):
+                if sub_command == "label":
                     pass
-                elif(sub_command == "remove-label"):
+                elif sub_command == "remove-label":
                     pass
-                elif(sub_command == "assign"):
+                elif sub_command == "assign":
                     pass
-                elif(sub_command == "unassign"):
+                elif sub_command == "unassign":
                     pass
                 else:
                     log_warning = True
