@@ -5,6 +5,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import logging
 
+from . import issues
 log = logging.getLogger("github_api")
 
 
