@@ -1,5 +1,4 @@
 import logging
-import arrow
 import json
 import os
 import re
@@ -229,7 +228,7 @@ def handle_comment(api, issue_comment):
         __log.debug("comment: {comment} is not a command, " +
                     "parsed: {parsed}".format(comment=comment_text, parsed=orig_parsed))
 
-        
+
 def poll_read_issue_comments(api):
     __log.info("looking for issue comments")
 
