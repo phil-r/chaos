@@ -10,8 +10,6 @@ from . import misc
 from . import voting
 
 
-
-
 def merge_pr(api, urn, pr, votes, total, threshold):
     """ merge a pull request, if possible, and use a nice detailed merge commit
     message """
